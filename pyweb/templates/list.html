@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block section %}
+    <h2>Submission</h2>
+{% endblock %}
+
+{% block content %}
+  <div class="container" id="homeContainer">
+    <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Name</th>
+      <th scope="col">Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for List in submission %}
+    <tr>
+      <th scope="row">{{forloop.counter}}</th>
+      <td>{{List.location}}</td>
+      <td>{{List.grade}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+  </div>
+{% endblock %}

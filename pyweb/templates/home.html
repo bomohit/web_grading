@@ -1,0 +1,102 @@
+<!-- <h1>Hellow World</h1> -->
+{% extends 'base.html' %}
+
+  {% block section %}
+    {% if course|length > 0 %}
+      <h2>Course</h2>
+    {% elif class|length > 0 %}
+      <h2>Class</h2>
+    {% elif assignment|length > 0 %}
+      <h2>Submission</h2>
+    {% else %}
+      <h2>Submission</h2>
+    {% endif %}
+  {% endblock %}
+
+  {% block content %}
+    <div class="container" id="homeContainer">
+      {% if course|length > 0 %}
+        {% for Course in course %}
+          <form action="selectionCourse" method="post">
+            {% csrf_token %}
+            <button value="{{Course.code}}" class="form-control mb-1" name="code" type="submit">{{Course.name}}</button>
+          </form>
+        {% endfor %}
+
+      {% elif class|length > 0 %}
+        {% for Class in class %}
+         {% if Class.code == code %}
+            <form action="selectionClass" method="post">
+              {% csrf_token %}
+              <button value="{{Class.code}},{{Class.class_code}}" class="form-control mb-1" name="codeClass" type="submit">{{Class.class_code}}</button>
+            </form>
+          {% endif %}
+        {% endfor %}
+
+      {% elif assignment|length > 0 %}
+        {% if user.is_staff %}
+          <button onclick="displayModal()" value="{{code}},{{class_code}}" class="form-control mb-1 btn btn-secondary">ADD</button>
+        {% endif %}
+      <table class="table">
+        <thead>
+          <tr>
+            {% if user.is_staff %}
+            <!-- For Lecturer -->
+            <th scope="col">Date<br><span class="form-text">(upload date)</span></th>
+            <th scope="col">Title<br><span class="form-text">(Assignment Title)</span></th>
+            {% else %}
+            <!-- For Student -->
+            <th scope="col">Date<br><span class="form-text">(upload date)</span></th>
+            <th scope="col">Title<br><span class="form-text">(Assignment Title)</span></th>
+            <th scope="col">Score<br><span class="form-text">(Assignment Score)</span></th>
+            <th scope="col">Download<br><span class="form-text">(download question)</span></th>
+            <th scope="col">Upload<br><span class="form-text">(upload answer)</span></th>
+            {% endif %}
+          </tr>
+          <tbody>
+        {% for Assignment in assignment %}
+          <tr>
+            {% if user.is_staff %}
+              <th>{{Assignment.date}}</th>
+              <form action="showlist" method="get">
+                <th><button type="submit" class="btn btn-light" name="asg" value="{{code}},{{class_code}},{{Assignment.id}}">{{Assignment.title}}</button></th>
+              </form>
+            {% else %}
+                <th>{{Assignment.date}}</th>
+                <th>{{Assignment.title}}</th>
+                <th>0.0</th>
+                <th><a class="form-control mb-1 btn btn-success" href="{{Assignment.location.url}}" download>DOWNLOAD</a></th>
+                <th>
+                  <form action="submitAssignment" method="post" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <div class="input-group">
+                    <input class="form-control" type="file" name="docfile" accept=".py" required />
+                    <input class="visually-hidden" value="{{Assignment.id}}" name="Assignment_id"></input>
+                    <button class="btn btn-outline-secondary" type="submit">SUBMIT</button>
+                  </div>
+                </form>
+              </th>
+                <!-- <th><button value="{{Assignment.code}},{{Assignment.class_code}}" type="submit" class="form-control mb-1">UPLOAD</button></th> -->
+
+            {% endif %}
+          </tr>
+        {% endfor %}
+          </tbody>
+        </thead>
+      </table>
+      {% else %}
+      <button onclick="displayModal()" value="{{code}},{{class_code}}" class="form-control mb-1 btn btn-secondary">ADD</button>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Title</th>
+            <th scope="col">View</th>
+          </tr>
+          <tbody>
+          </tbody>
+        </thead>
+      {% endif %}
+
+    </div>
+  {% endblock %}
