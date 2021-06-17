@@ -64,16 +64,20 @@
             {% else %}
                 <th>{{Assignment.date}}</th>
                 <th>{{Assignment.title}}</th>
-                <th>0.0</th>
+                <th>{{Assignment.grade}}</th>
                 <th><a class="form-control mb-1 btn btn-success" href="{{Assignment.location.url}}" download>DOWNLOAD</a></th>
                 <th>
                   <form action="submitAssignment" method="post" enctype="multipart/form-data">
                   {% csrf_token %}
-                  <div class="input-group">
-                    <input class="form-control" type="file" name="docfile" accept=".py" required />
-                    <input class="visually-hidden" value="{{Assignment.id}}" name="Assignment_id"></input>
-                    <button class="btn btn-outline-secondary" type="submit">SUBMIT</button>
-                  </div>
+                  {% if Assignment.id in submitted %}
+                    <p>Already Submitted</p>
+                  {% else %}
+                    <div class="input-group">
+                      <input class="form-control" type="file" name="docfile" accept=".py" required />
+                      <input class="visually-hidden" value="{{Assignment.id}}" name="Assignment_id"></input>
+                      <button class="btn btn-outline-secondary" type="submit">SUBMIT</button>
+                    </div>
+                  {% endif %}
                 </form>
               </th>
                 <!-- <th><button value="{{Assignment.code}},{{Assignment.class_code}}" type="submit" class="form-control mb-1">UPLOAD</button></th> -->

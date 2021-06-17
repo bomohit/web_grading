@@ -6,6 +6,7 @@ from .models import Course, Class, Assignment, Student, Submission
 import sys
 from io import StringIO
 import contextlib
+
 # Create your views here.
 # user = None
 def login(request):
@@ -15,18 +16,34 @@ def login(request):
         # print("{}{}".format(username, password))
         global user
         user = auth.authenticate(username=username, password=password)
+
         if user is not None:
             print("user is not none")
             auth.login(request, user)
             print("user: {}".format(user.username))
+
+            # TESTING CODE
+            request.session['user_email'] = user.email
+            request.session['user_is_staff'] = user.is_staff
+            request.session['user_is_authenticated'] = user.is_authenticated
+
             return redirect("home")
             # return(home(request))
+        else:
+            return render(request, 'index.html')
     else:
         return render(request, 'index.html')
 
 def home(request):
     # cLass = Class.objects.all()
     course = Course.objects.all()
+    # TESTING CODE
+    try:
+        User = request.session['user_is_authenticated']
+        print("user log in")
+    except:
+        print("user not log in")
+        return redirect("/")
 
     # Check if user currently log in or not
     if ongoing(request):
@@ -35,7 +52,15 @@ def home(request):
         return render(request, 'index.html')
 
 def selectionCourse(request):
-    code = request.POST['code']
+    # code = request.POST['code']
+    global code
+    if request.method == "POST":
+        code = request.POST['code']
+        request.session['code'] = code
+        print("post")
+    else:
+        code = request.session['code']
+
     # Check user is a staff or not
     if user.is_staff:
         cLass = Class.objects.all()
@@ -47,7 +72,21 @@ def selectionCourse(request):
         studentEmail = user.email
         class_code = Student.objects.get(code=code, email=studentEmail).class_code
         assignment = Assignment.objects.filter(code=code, class_code=class_code)
+        submitted = Submission.objects.filter(code=code, class_code=class_code, email=studentEmail)
+        filterSubmitted = ""
+        for Submitted in submitted:
+            filterSubmitted += str(Submitted.assignment_id)
+            filterSubmitted += ","
         print("class_code: {}".format(class_code))
+
+        for reassign in assignment:
+            try:
+                reassign.grade = Submission.objects.get(assignment_id=reassign.id, code=code, class_code=class_code, email=studentEmail).grade
+            except:
+                pass
+
+            reassign.id = "{},".format(reassign.id)
+            print(reassign.id)
 
         global Code
         global Class_code
@@ -56,7 +95,7 @@ def selectionCourse(request):
 
         for i in assignment:
             print(i.class_code)
-        return render(request, 'home.html', {'assignment': assignment, 'code':code, 'class_code':class_code})
+        return render(request, 'home.html', {'assignment': assignment, 'code':code, 'class_code':class_code, 'submitted': filterSubmitted})
 
 def selectionClass(request):
     assignment = Assignment.objects.all()
@@ -88,7 +127,7 @@ def uploadQuestion(request):
 
 def submitAssignment(request):
     assignment = Assignment.objects.all()
-    assignment_id = request.POST['Assignment_id']
+    assignment_id = request.POST['Assignment_id'].replace(',','')
     myFile = request.FILES['docfile']
     email = user.email
     print("submitAssignment:Success")
@@ -106,10 +145,10 @@ def submitAssignment(request):
     else:
         pass
 
-    # submission = Submission(assignment_id=assignment_id, code=Code, class_code=Class_code, email=email, location=myFile, grade=grade)
-    # submission.save()
+    submission = Submission(assignment_id=assignment_id, code=Code, class_code=Class_code, email=email, location=myFile, grade=grade)
+    submission.save()
     return render(request, 'home.html', {'assignment': assignment, 'code':Code, 'class_code':Class_code})
-    # return redirect("home")
+    return redirect("selectionCourse")
 
 def gradeIf(file, sample):
     g = 0
